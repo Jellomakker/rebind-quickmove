@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.quickswaprebind.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "HandledScreenMixin",
+    "KeyBindingAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "quickswap-rebind",
+  "version": "${version}",
+  "name": "QuickSwap Rebind",
+  "description": "Lets you rebind the Shift-click quick-move key in inventories to any key you want.",
+  "authors": [
+    "Jellomakker"
+  ],
+  "contact": {
+    "sources": "https://github.com/Jellomakker/aimbotidk"
+  },
+  "license": "MIT",
+  "icon": "assets/quickswaprebind/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.quickswaprebind.QuickSwapRebindClient"
+    ]
+  },
+  "mixins": [
+    "quickswaprebind.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": ">=1.21.5",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
