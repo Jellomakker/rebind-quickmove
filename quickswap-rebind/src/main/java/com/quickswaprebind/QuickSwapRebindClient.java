@@ -17,50 +17,53 @@ import org.slf4j.LoggerFactory;
  * <p>
  * By default, Minecraft uses Left Shift to quick-move items in inventories.
  * This mod exposes that as a normal re-bindable key in Options → Controls → Key Binds.
+ * <p>
+ * When rebound to a different key:
+ * <ul>
+ *   <li>New key + click = QUICK_MOVE (shift-click equivalent)</li>
+ *   <li>Shift + click = normal click (vanilla shift-click is suppressed)</li>
+ * </ul>
+ * When left at default (Left Shift): vanilla behaviour is unchanged.
  */
 public class QuickSwapRebindClient implements ClientModInitializer {
 
     public static final String MOD_ID = "quickswaprebind";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-    /**
-     * The keybind that replaces Shift for quick-move in inventories.
-     * Default: Left Shift (same as vanilla) – change it in Controls.
-     */
+    /** The rebindable keybind for quick-move. Default: Left Shift. */
     public static KeyBinding quickSwapKey;
 
-    /**
-     * The keybind for quick-dropping an entire stack from inventory.
-     * Default: Unbound – set it in Controls.
-     * Vanilla requires Ctrl+Q; this lets you do it with one key.
-     */
-    public static KeyBinding quickDropKey;
+    /** GLFW key code for Left Shift – the vanilla default. */
+    private static final int DEFAULT_KEY = GLFW.GLFW_KEY_LEFT_SHIFT;
 
     @Override
     public void onInitializeClient() {
-        LOGGER.info("[QuickSwap Rebind] Initializing...");
-
         quickSwapKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.quickswaprebind.quickmove",   // translation key
                 InputUtil.Type.KEYSYM,              // key type
-                GLFW.GLFW_KEY_G,                    // default key: G (rebindable in Controls)
+                DEFAULT_KEY,                        // default key (vanilla behaviour)
                 "category.quickswaprebind"           // category shown in Controls
         ));
 
-        quickDropKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.quickswaprebind.quickdrop",    // translation key
-                InputUtil.Type.KEYSYM,              // key type
-                GLFW.GLFW_KEY_H,                    // default key: H (rebindable in Controls)
-                "category.quickswaprebind"           // category shown in Controls
-        ));
+        LOGGER.info("[QuickSwap Rebind] Registered quick-move keybind (default: Left Shift)");
+    }
 
-        LOGGER.info("[QuickSwap Rebind] Registered keybinds: Quick Move (default: G), Quick Drop (default: H)");
-        LOGGER.info("[QuickSwap Rebind] Go to Options > Controls > Key Binds and look for 'QuickSwap Rebind' category");
+    /**
+     * @return the GLFW key code currently bound to quick-move
+     */
+    public static int getBoundKeyCode() {
+        return ((KeyBindingAccessor) quickSwapKey).quickswaprebind$getBoundKey().getCode();
+    }
+
+    /**
+     * @return true if the player has rebound quick-move away from Left Shift
+     */
+    public static boolean isRebound() {
+        return getBoundKeyCode() != DEFAULT_KEY;
     }
 
     /**
      * Checks whether the key currently bound to quick-move is physically held down.
-     * Called from the {@link com.quickswaprebind.mixin.HandledScreenMixin} redirect.
      *
      * @return true if the bound key is pressed right now
      */
@@ -69,23 +72,7 @@ public class QuickSwapRebindClient implements ClientModInitializer {
         if (client == null || client.getWindow() == null) {
             return false;
         }
-        long windowHandle = client.getWindow().getHandle();
-        InputUtil.Key boundKey = ((KeyBindingAccessor) quickSwapKey).quickswaprebind$getBoundKey();
-        return InputUtil.isKeyPressed(windowHandle, boundKey.getCode());
-    }
-
-    /**
-     * Checks whether the key bound to quick-drop is physically held down.
-     *
-     * @return true if the quick-drop key is pressed right now
-     */
-    public static boolean isQuickDropKeyPressed() {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client == null || client.getWindow() == null) {
-            return false;
-        }
-        long windowHandle = client.getWindow().getHandle();
-        InputUtil.Key boundKey = ((KeyBindingAccessor) quickDropKey).quickswaprebind$getBoundKey();
-        return InputUtil.isKeyPressed(windowHandle, boundKey.getCode());
+        long handle = client.getWindow().getHandle();
+        return InputUtil.isKeyPressed(handle, getBoundKeyCode());
     }
 }

@@ -1,5 +1,4 @@
 {
   "category.quickswaprebind": "QuickSwap Rebind",
-  "key.quickswaprebind.quickmove": "Quick Move (Inventory)",
-  "key.quickswaprebind.quickdrop": "Quick Drop Stack (Inventory)"
+  "key.quickswaprebind.quickmove": "Quick Move (Inventory)"
 }
