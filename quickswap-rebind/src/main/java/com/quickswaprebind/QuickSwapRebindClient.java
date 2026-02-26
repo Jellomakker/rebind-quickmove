@@ -38,21 +38,24 @@ public class QuickSwapRebindClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        LOGGER.info("[QuickSwap Rebind] Initializing...");
+
         quickSwapKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.quickswaprebind.quickmove",   // translation key
                 InputUtil.Type.KEYSYM,              // key type
-                GLFW.GLFW_KEY_LEFT_SHIFT,           // default key (vanilla behaviour)
+                GLFW.GLFW_KEY_G,                    // default key: G (rebindable in Controls)
                 "category.quickswaprebind"           // category shown in Controls
         ));
 
         quickDropKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.quickswaprebind.quickdrop",    // translation key
                 InputUtil.Type.KEYSYM,              // key type
-                GLFW.GLFW_KEY_UNKNOWN,              // unbound by default
+                GLFW.GLFW_KEY_H,                    // default key: H (rebindable in Controls)
                 "category.quickswaprebind"           // category shown in Controls
         ));
 
-        LOGGER.info("[QuickSwap Rebind] Registered quick-move and quick-drop keybinds");
+        LOGGER.info("[QuickSwap Rebind] Registered keybinds: Quick Move (default: G), Quick Drop (default: H)");
+        LOGGER.info("[QuickSwap Rebind] Go to Options > Controls > Key Binds and look for 'QuickSwap Rebind' category");
     }
 
     /**
@@ -83,10 +86,6 @@ public class QuickSwapRebindClient implements ClientModInitializer {
         }
         long windowHandle = client.getWindow().getHandle();
         InputUtil.Key boundKey = ((KeyBindingAccessor) quickDropKey).quickswaprebind$getBoundKey();
-        // Only trigger if the key is actually bound (not UNKNOWN)
-        if (boundKey.getCode() == GLFW.GLFW_KEY_UNKNOWN) {
-            return false;
-        }
         return InputUtil.isKeyPressed(windowHandle, boundKey.getCode());
     }
 }
