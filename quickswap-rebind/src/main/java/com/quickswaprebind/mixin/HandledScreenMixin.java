@@ -39,7 +39,19 @@ public abstract class HandledScreenMixin {
      */
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     private void quickswaprebind$onMouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
-        // Only intercept left-click (0) and right-click (1)
+        // Quick Drop: hold the quick-drop key and click a slot to throw the entire stack
+        // Vanilla equivalent: hover over slot and press Ctrl+Q
+        // SlotActionType.THROW with button=1 means "drop entire stack"
+        if (button == 0
+                && this.focusedSlot != null
+                && this.focusedSlot.hasStack()
+                && QuickSwapRebindClient.isQuickDropKeyPressed()) {
+            this.onMouseClick(this.focusedSlot, this.focusedSlot.id, 1, SlotActionType.THROW);
+            cir.setReturnValue(true);
+            return;
+        }
+
+        // Quick Move: hold the quick-move key and click to shift-click
         if ((button == 0 || button == 1)
                 && this.focusedSlot != null
                 && QuickSwapRebindClient.isQuickSwapKeyPressed()) {

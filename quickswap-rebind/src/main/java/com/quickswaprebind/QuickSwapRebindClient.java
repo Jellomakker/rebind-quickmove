@@ -29,6 +29,13 @@ public class QuickSwapRebindClient implements ClientModInitializer {
      */
     public static KeyBinding quickSwapKey;
 
+    /**
+     * The keybind for quick-dropping an entire stack from inventory.
+     * Default: Unbound – set it in Controls.
+     * Vanilla requires Ctrl+Q; this lets you do it with one key.
+     */
+    public static KeyBinding quickDropKey;
+
     @Override
     public void onInitializeClient() {
         quickSwapKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
@@ -38,7 +45,14 @@ public class QuickSwapRebindClient implements ClientModInitializer {
                 "category.quickswaprebind"           // category shown in Controls
         ));
 
-        LOGGER.info("[QuickSwap Rebind] Registered quick-move keybind (default: Left Shift)");
+        quickDropKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+                "key.quickswaprebind.quickdrop",    // translation key
+                InputUtil.Type.KEYSYM,              // key type
+                GLFW.GLFW_KEY_UNKNOWN,              // unbound by default
+                "category.quickswaprebind"           // category shown in Controls
+        ));
+
+        LOGGER.info("[QuickSwap Rebind] Registered quick-move and quick-drop keybinds");
     }
 
     /**
@@ -54,6 +68,25 @@ public class QuickSwapRebindClient implements ClientModInitializer {
         }
         long windowHandle = client.getWindow().getHandle();
         InputUtil.Key boundKey = ((KeyBindingAccessor) quickSwapKey).quickswaprebind$getBoundKey();
+        return InputUtil.isKeyPressed(windowHandle, boundKey.getCode());
+    }
+
+    /**
+     * Checks whether the key bound to quick-drop is physically held down.
+     *
+     * @return true if the quick-drop key is pressed right now
+     */
+    public static boolean isQuickDropKeyPressed() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client == null || client.getWindow() == null) {
+            return false;
+        }
+        long windowHandle = client.getWindow().getHandle();
+        InputUtil.Key boundKey = ((KeyBindingAccessor) quickDropKey).quickswaprebind$getBoundKey();
+        // Only trigger if the key is actually bound (not UNKNOWN)
+        if (boundKey.getCode() == GLFW.GLFW_KEY_UNKNOWN) {
+            return false;
+        }
         return InputUtil.isKeyPressed(windowHandle, boundKey.getCode());
     }
 }
