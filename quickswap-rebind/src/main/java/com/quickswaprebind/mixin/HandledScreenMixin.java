@@ -1,65 +1,50 @@
 package com.quickswaprebind.mixin;
 
 import com.quickswaprebind.QuickSwapRebindClient;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.screen.slot.Slot;
+import net.minecraft.screen.slot.SlotActionType;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Mixin into {@link HandledScreen} that replaces the vanilla {@code hasShiftDown()} check
- * used for quick-moving items with our custom rebindable key.
+ * Mixin into {@link HandledScreen} that adds rebindable quick-move support.
  * <p>
- * Vanilla behaviour:
- * <pre>
- *   if (Screen.hasShiftDown()) {
- *       actionType = SlotActionType.QUICK_MOVE;
- *   }
- * </pre>
+ * Uses {@code @Inject} at the HEAD of {@code mouseClicked} to intercept clicks
+ * when our custom key is held, and performs a QUICK_MOVE action on the hovered slot.
  * <p>
- * After this mixin, the condition becomes:
- * <pre>
- *   if (QuickSwapRebindClient.isQuickSwapKeyPressed()) {
- *       actionType = SlotActionType.QUICK_MOVE;
- *   }
- * </pre>
- * <p>
- * This is entirely client-side. The resulting slot-click packet sent to the server is
- * identical to a normal shift-click, so no custom packets are needed and servers
- * cannot distinguish this from vanilla shift-click.
+ * This approach is version-resilient: it does not depend on where or how vanilla
+ * checks {@code hasShiftDown()} internally — it simply fires before vanilla logic.
+ * The resulting slot-click packet sent to the server is identical to a vanilla
+ * shift-click, so servers cannot distinguish this from normal behaviour.
  */
 @Mixin(HandledScreen.class)
 public abstract class HandledScreenMixin {
 
-    /**
-     * Redirects every {@code Screen.hasShiftDown()} call inside {@code mouseClicked}
-     * to instead check our custom keybind.
-     */
-    @Redirect(
-            method = "mouseClicked",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/screen/Screen;hasShiftDown()Z"
-            )
-    )
-    private boolean quickswaprebind$redirectQuickMoveKey() {
-        return QuickSwapRebindClient.isQuickSwapKeyPressed();
-    }
+    @Shadow
+    @Nullable
+    protected Slot focusedSlot;
+
+    @Shadow
+    protected abstract void onMouseClick(@Nullable Slot slot, int slotId, int button, SlotActionType actionType);
 
     /**
-     * Also redirect in {@code mouseReleased} so that shift-drag (quick-moving multiple
-     * stacks) respects the rebound key too.
+     * Before vanilla processes a mouse click in the inventory, check if our
+     * custom quick-move key is held and the cursor is over a slot.
+     * If so, perform QUICK_MOVE and cancel the vanilla handler.
      */
-    @Redirect(
-            method = "mouseReleased",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/screen/Screen;hasShiftDown()Z"
-            ),
-            require = 0  // Not all versions call hasShiftDown here – gracefully skip
-    )
-    private boolean quickswaprebind$redirectQuickMoveKeyRelease() {
-        return QuickSwapRebindClient.isQuickSwapKeyPressed();
+    @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
+    private void quickswaprebind$onMouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
+        // Only intercept left-click (0) and right-click (1)
+        if ((button == 0 || button == 1)
+                && this.focusedSlot != null
+                && QuickSwapRebindClient.isQuickSwapKeyPressed()) {
+            this.onMouseClick(this.focusedSlot, this.focusedSlot.id, button, SlotActionType.QUICK_MOVE);
+            cir.setReturnValue(true);
+        }
     }
 }
