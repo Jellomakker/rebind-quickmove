@@ -1,6 +1,7 @@
 package com.quickswaprebind.mixin;
 
 import com.quickswaprebind.QuickSwapRebindClient;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
@@ -36,8 +37,14 @@ public abstract class HandledScreenMixin {
     @Shadow
     protected abstract void onMouseClick(@Nullable Slot slot, int slotId, int button, SlotActionType actionType);
 
+    /**
+     * 1.21.11+: mouseClicked now takes (Click, boolean) instead of (double, double, int).
+     * Intercept at HEAD to handle our rebindable quick-move key.
+     */
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
-    private void quickswaprebind$onMouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
+    private void quickswaprebind$onMouseClicked(Click click, boolean bl, CallbackInfoReturnable<Boolean> cir) {
+        int button = click.button();
+
         // Only intercept left-click (0) and right-click (1) on a valid slot
         if ((button != 0 && button != 1) || this.focusedSlot == null) {
             return;
