@@ -5,6 +5,7 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.util.Identifier;
 
 import com.quickswaprebind.mixin.KeyBindingAccessor;
 
@@ -38,11 +39,16 @@ public class QuickSwapRebindClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        // 1.21.11+ uses KeyBinding.Category record instead of String
+        KeyBinding.Category category = KeyBinding.Category.create(
+                Identifier.of(MOD_ID, MOD_ID)
+        );
+
         quickSwapKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.quickswaprebind.quickmove",   // translation key
                 InputUtil.Type.KEYSYM,              // key type
                 DEFAULT_KEY,                        // default key (vanilla behaviour)
-                "category.quickswaprebind"           // category shown in Controls
+                category                            // category shown in Controls
         ));
 
         LOGGER.info("[QuickSwap Rebind] Registered quick-move keybind (default: Left Shift)");
@@ -72,7 +78,23 @@ public class QuickSwapRebindClient implements ClientModInitializer {
         if (client == null || client.getWindow() == null) {
             return false;
         }
+        // 1.21.11+: isKeyPressed takes Window instead of long
+        return InputUtil.isKeyPressed(client.getWindow(), getBoundKeyCode());
+    }
+
+    /**
+     * Checks whether either Shift key is physically held down via GLFW.
+     * Used as a replacement for the removed Screen.hasShiftDown().
+     *
+     * @return true if Left Shift or Right Shift is pressed
+     */
+    public static boolean isShiftDown() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client == null || client.getWindow() == null) {
+            return false;
+        }
         long handle = client.getWindow().getHandle();
-        return InputUtil.isKeyPressed(handle, getBoundKeyCode());
+        return GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
+            || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
     }
 }

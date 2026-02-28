@@ -1,7 +1,6 @@
 package com.quickswaprebind.mixin;
 
 import com.quickswaprebind.QuickSwapRebindClient;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
@@ -52,7 +51,7 @@ public abstract class HandledScreenMixin {
         // --- The key has been rebound to something other than Shift ---
 
         boolean customKeyHeld = QuickSwapRebindClient.isQuickSwapKeyPressed();
-        boolean shiftHeld = Screen.hasShiftDown();
+        boolean shiftHeld = QuickSwapRebindClient.isShiftDown();
 
         if (customKeyHeld) {
             // Custom key is held → perform QUICK_MOVE (exact same packet as shift-click)
